@@ -5,6 +5,11 @@ cd /d "%~dp0.."
 
 pip install pyinstaller pywin32 || goto :err
 
+REM shadow the pyinstaller-hooks-contrib hook for the *other* PyPI "docx2pdf"
+REM package which calls copy_metadata('docx2pdf') and breaks on our repo
+if not exist build\hooks mkdir build\hooks
+> build\hooks\hook-docx2pdf.py echo hiddenimports = ["docx2pdf.core", "docx2pdf.cli", "docx2pdf"]
+
 python -m PyInstaller --onefile --console --name docx2pdf ^
   --paths "%~dp0.." ^
   --additional-hooks-dir "%~dp0..\build\hooks" ^
