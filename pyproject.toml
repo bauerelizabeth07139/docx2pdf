@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "docx2pdf"
+version = "1.0.0"
+description = "Convert Word doc/docx to PDF on Windows via WPS Office / Microsoft Word COM"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+com = ["pywin32>=300"]
+
+[project.scripts]
+docx2pdf = "docx2pdf.cli:main"
+
+[tool.setuptools]
+packages = ["docx2pdf"]
