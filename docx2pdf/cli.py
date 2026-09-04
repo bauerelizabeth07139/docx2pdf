@@ -37,7 +37,12 @@ def _cmd_convert(args):
               file=sys.stderr)
         return 2
     try:
-        if len(args.inputs) == 1 and os.path.isfile(args.inputs[0]) and args.output:
+        if (
+            len(args.inputs) == 1
+            and os.path.isfile(args.inputs[0])
+            and args.output
+            and not os.path.isdir(args.output)
+        ):
             # single-file mode, explicit output name
             convert_file(args.inputs[0], args.output, backend=backend, visible=args.visible)
             print("written:", args.output)
@@ -59,11 +64,18 @@ def _cmd_convert(args):
 
 
 def main(argv=None):
+    # Windows consoles may use a non-UTF-8 codepage (e.g. GBK); never crash
+    # while printing paths/messages that contain unencodable characters.
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")
+        except (AttributeError, ValueError):
+            pass
     p = argparse.ArgumentParser(
         prog="docx2pdf",
         description="Convert .docx to PDF using WPS Office / Microsoft Word.",
     )
-    p.add_argument("--version", action="version", version=__version__)
+    p.add_argument("--version", action="version", version="%(prog)s " + __version__)
     sub = p.add_subparsers(dest="command", required=True)
 
     cv = sub.add_parser("convert", help="convert doc/docx to pdf")

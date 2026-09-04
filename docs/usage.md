@@ -2,6 +2,9 @@
 
 ## 快速开始
 
+命令可用 `docx2pdf.exe`（打包版）、`docx2pdf`（`pip install .` 后）或
+`python -m docx2pdf`（源码目录内）任一种方式启动，下文以 `docx2pdf` 为例：
+
 ```bash
 # 单文件
 docx2pdf.exe convert 输入.docx -o 输出.pdf

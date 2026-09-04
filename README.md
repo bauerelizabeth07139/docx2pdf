@@ -23,24 +23,32 @@ pip install .                          # 安装为库 + `docx2pdf` 命令
 
 ## 用法 / Usage
 
+命令有三种等效的启动方式：
+
+| 方式 | 说明 |
+| --- | --- |
+| `docx2pdf.exe` | PyInstaller 打包的单文件 exe（见下方「打包」） |
+| `docx2pdf` | `pip install .` 后安装的命令行入口 |
+| `python -m docx2pdf` | 从源码仓库直接运行 |
+
 ```bash
 # 单文件
-docx2pdf.exe convert 输入.docx -o 输出.pdf
+docx2pdf convert 输入.docx -o 输出.pdf
 
 # 指定后端
-docx2pdf.exe convert 输入.docx -o 输出.pdf --backend word
+docx2pdf convert 输入.docx -o 输出.pdf --backend word
 
-# 目录批量
-docx2pdf.exe convert ./docs/ -o ./out/
+# 目录批量（-o 指向已存在目录时自动按批量处理）
+docx2pdf convert ./docs/ -o ./out/
 
 # 递归子目录
-docx2pdf.exe convert ./docs/ -o ./out/ --recursive
+docx2pdf convert ./docs/ -o ./out/ --recursive
 
 # 覆盖已存在文件
-docx2pdf.exe convert ./docs/ -o ./out/ --overwrite
+docx2pdf convert ./docs/ -o ./out/ --overwrite
 
 # 列出可用后端
-docx2pdf.exe convert --list
+docx2pdf convert --list
 ```
 
 ### 子命令总览
@@ -76,16 +84,34 @@ scripts\build_exe.bat
 ```
 
 产物：`dist/docx2pdf.exe`（PyInstaller onefile，依赖 pywin32 随包打包）。
+`launcher.py` 是打包入口，也可以直接 `python launcher.py convert --list` 运行。
+
+## 测试 / Tests
+
+无需 Office 软件即可运行（COM 后端已 mock）：
+
+```bash
+python -m unittest discover -s tests -v
+```
 
 ## 目录 / Layout
 
 ```
 docx2pdf/
-  __init__.py
-  cli.py       # 命令行入口
-  core.py      # 转换核心（后端探测 / COM / 批量）
+  __init__.py   # 版本号
+  __main__.py   # python -m docx2pdf 入口
+  cli.py        # 命令行入口
+  core.py       # 转换核心（后端探测 / COM / 批量）
+launcher.py     # PyInstaller 打包入口
 scripts/
   build_exe.bat
+  make_sample.py
+docs/
+  usage.md      # 中文使用说明
+tests/
+  test_core.py
+  test_cli.py
+.github/workflows/ci.yml
 ```
 
 ## License

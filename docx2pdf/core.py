@@ -33,24 +33,34 @@ def discover_kwpsconvert():
     return None
 
 
-def available_wps_com():
+def _probe_com(progid):
+    """Return True if the given COM ProgID can be started, without leaking it.
+
+    A freshly dispatched application is quit again so probing does not leave
+    orphaned Word/WPS processes behind.
+    """
     try:
         import win32com.client as win32
 
-        win32.Dispatch("KWPS.Application")
+        app = win32.Dispatch(progid)
+        try:
+            app.Visible = False
+        finally:
+            try:
+                app.Quit()
+            except Exception:  # noqa: BLE001
+                pass
         return True
     except Exception:  # noqa: BLE001
         return False
+
+
+def available_wps_com():
+    return _probe_com("KWPS.Application")
 
 
 def available_word_com():
-    try:
-        import win32com.client as win32
-
-        win32.Dispatch("Word.Application")
-        return True
-    except Exception:  # noqa: BLE001
-        return False
+    return _probe_com("Word.Application")
 
 
 def available_backends():
@@ -101,12 +111,17 @@ def convert_file(src, out, backend="auto", visible=False):
 def _convert_com(progid, src, out, visible):
     import win32com.client as win32
 
+    src_abs = os.path.abspath(src)
+    out_abs = os.path.abspath(out)
+    out_dir = os.path.dirname(out_abs)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
     app = win32.Dispatch(progid)
     app.Visible = visible
     try:
-        doc = app.Documents.Open(os.path.abspath(src), ReadOnly=False)
+        doc = app.Documents.Open(src_abs, ReadOnly=False)
         try:
-            doc.ExportAsFixedFormat(os.path.abspath(out), 17)  # 17 = PDF
+            doc.ExportAsFixedFormat(out_abs, 17)  # 17 = PDF
         finally:
             doc.Close(False)
     finally:
@@ -166,6 +181,7 @@ def batch_convert(inputs, outdir=None, recursive=False, backend="auto", visible=
     """
     items = collect_files(inputs, recursive=recursive)
     results = []
+    claimed = {}
     for src, name in items:
         base = os.path.splitext(name)[0]
         if outdir:
@@ -173,6 +189,10 @@ def batch_convert(inputs, outdir=None, recursive=False, backend="auto", visible=
             out = os.path.abspath(os.path.join(outdir, base + ".pdf"))
         else:
             out = os.path.join(os.path.dirname(src), base + ".pdf")
+        if out in claimed:
+            print("warning: '%s' and '%s' map to the same output '%s'; keeping the last one"
+                  % (claimed[out], src, out))
+        claimed[out] = src
         if os.path.exists(out) and not overwrite:
             print("skip (exists): %s" % out)
             continue
